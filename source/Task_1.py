@@ -116,3 +116,6 @@ class SklearnPipelineFlow(FlowSpec):
     def end(self):
         print("🎉 Pipeline hoàn tất.")
         print(f"Độ chính xác cuối cùng: {self.accuracy:.4f}")
+        
+if __name__ == '__main__':
+    SklearnPipelineFlow()
