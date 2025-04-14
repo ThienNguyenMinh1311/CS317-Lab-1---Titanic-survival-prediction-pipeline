@@ -68,8 +68,6 @@ $ source venv/bin/activate          # Windows: venv\Scripts\activate
 
 # 3 · Install required packages
 (venv)$ pip install -r requirements.txt
-
-# 4 · Download the dataset and place the CSVs in ./dataset/
 ```
 
 ## Usage
