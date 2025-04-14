@@ -4,13 +4,15 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 import pandas as pd
 import mlflow
 import mlflow.sklearn
-import joblib  
+import seaborn as sns
+import matplotlib.pyplot as plt
+import joblib
+import os  
 
 class SklearnPipelineFlow(FlowSpec):
     train_data_path = Parameter(
@@ -32,32 +34,10 @@ class SklearnPipelineFlow(FlowSpec):
     @step
     def start(self):
         print("🚀 Khởi động pipeline ML với sklearn + Metaflow + MLflow!")
-        self.next(self.check_versions)
-
-    @step
-    def check_versions(self):
-        import sys
-        import pandas as pd
-        import sklearn
-        import numpy as np
-        import metaflow
-        import mlflow
-        import joblib  
-
-        print("📦 Phiên bản thư viện đang sử dụng:")
-        print(f"Python: {sys.version}")
-        print(f"pandas: {pd.__version__}")
-        print(f"scikit-learn: {sklearn.__version__}")
-        print(f"numpy: {np.__version__}")
-        print(f"metaflow: {metaflow.__version__}")
-        print(f"mlflow: {mlflow.__version__}")  # In version của mlflow
-        print(f"joblib: {joblib.__version__}")  # In version của joblib
-
         self.next(self.load_data)
 
     @step
     def load_data(self):
-        print("Begin step 1")
         self.train_df = pd.read_csv(self.train_data_path)
         self.test_df = pd.read_csv(self.test_data_path)
         self.gender_submission_df = pd.read_csv(self.gender_submission_path)
@@ -68,113 +48,101 @@ class SklearnPipelineFlow(FlowSpec):
 
         self.test_df.drop(columns=['Name', 'Ticket', 'Cabin', 'PassengerId'], inplace=True)
         self.X_test = self.test_df
-        print(f"Dữ liệu train: {self.X_train.shape[0]} mẫu, {self.X_train.shape[1]} đặc trưng")
-        print("End step 1")
-        self.next(self.build_pipeline)
 
-    @step
-    def build_pipeline(self):
-        print("Begin step 2")
         self.num_features = ['Pclass', 'Age', 'SibSp', 'Parch', 'Fare']
         self.cat_features = ['Sex', 'Embarked']
 
-        num_pipeline = Pipeline([('imputer', SimpleImputer()), ('scaler', StandardScaler())])
-        cat_pipeline = Pipeline([('imputer', SimpleImputer(strategy='most_frequent')), ('encoder', OneHotEncoder(handle_unknown='ignore'))])
+        self.next(self.build_preprocessor)
 
-        self.preprocessor = ColumnTransformer([('num', num_pipeline, self.num_features), ('cat', cat_pipeline, self.cat_features)])
-        print("End step 2")
+    @step
+    def build_preprocessor(self):
+        # Xử lý numeric
+        num_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='median')),
+            ('scaler', StandardScaler())
+        ])
+
+        # Xử lý categorical
+        cat_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='most_frequent')),
+            ('onehot', OneHotEncoder(handle_unknown='ignore'))
+        ])
+
+        self.preprocessor = ColumnTransformer(transformers=[
+            ('num', num_transformer, self.num_features),
+            ('cat', cat_transformer, self.cat_features)
+        ])
+
         self.next(self.train_model)
 
     @step
     def train_model(self):
-        print("Begin step 3")
+        print("🛠️ Đang huấn luyện mô hình...")
 
-        # Đảm bảo khởi tạo MLflow
         mlflow.start_run()
 
-        # Log dataset thông tin
         mlflow.log_param("train_data_path", self.train_data_path)
         mlflow.log_param("test_data_path", self.test_data_path)
-        mlflow.log_param("gender_submission_path", self.gender_submission_path)
 
-        # Định nghĩa mô hình RandomForest và KNN
-        rf_model = RandomForestClassifier(random_state=22521391)
-        knn_model = KNeighborsClassifier()
+        rf_model = RandomForestClassifier(random_state=42)
 
-        # Tạo pipeline đầy đủ với preprocessor và classifier cho RandomForest
-        rf_pipeline = Pipeline([('preprocessor', self.preprocessor), ('classifier', rf_model)])
+        rf_pipeline = Pipeline([
+            ('preprocessor', self.preprocessor),
+            ('classifier', rf_model)
+        ])
 
-        # Tạo pipeline đầy đủ với preprocessor và classifier cho KNN
-        knn_pipeline = Pipeline([('preprocessor', self.preprocessor), ('classifier', knn_model)])
-
-        # Grid search cho Random Forest
         param_grid_rf = {
             'preprocessor__num__imputer__strategy': ['mean', 'median'],
             'classifier__n_estimators': [100, 200],
             'classifier__max_depth': [None, 5, 10],
         }
 
-        # Grid search cho KNN
-        param_grid_knn = {
-            'preprocessor__num__imputer__strategy': ['mean', 'median'],
-            'classifier__n_neighbors': [3, 5, 7],
-            'classifier__weights': ['uniform', 'distance'],
-        }
+        grid_search = GridSearchCV(estimator=rf_pipeline, param_grid=param_grid_rf, cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
+        grid_search.fit(self.X_train, self.y_train)
 
-        # Log tên mô hình
-        mlflow.log_param("model", "RandomForest and KNN")
+        self.best_model = grid_search.best_estimator_
+        self.best_params = grid_search.best_params_
+        self.best_score = grid_search.best_score_
 
-        # Thực hiện grid search cho Random Forest
         mlflow.log_param("model_type", "RandomForest")
-        self.grid_search_rf = GridSearchCV(estimator=rf_pipeline, param_grid=param_grid_rf, cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
-        self.grid_search_rf.fit(self.X_train, self.y_train)
-        print(f"✅ Random Forest - Tốt nhất: {self.grid_search_rf.best_params_}")
+        mlflow.log_params(self.best_params)
+        mlflow.log_metric("cv_best_accuracy", self.best_score)
 
-        # Thực hiện grid search cho KNN
-        mlflow.log_param("model_type", "KNN")
-        self.grid_search_knn = GridSearchCV(estimator=knn_pipeline, param_grid=param_grid_knn, cv=5, scoring='accuracy', n_jobs=-1, verbose=2)
-        self.grid_search_knn.fit(self.X_train, self.y_train)
-        print(f"✅ KNN - Tốt nhất: {self.grid_search_knn.best_params_}")
+        joblib.dump(self.best_model, 'best_model.pkl')
+        mlflow.log_artifact('best_model.pkl')
+        mlflow.sklearn.log_model(self.best_model, artifact_path="sklearn_model")
 
-        # Log kết quả
-        self.best_model_rf = self.grid_search_rf.best_estimator_
-        self.best_model_knn = self.grid_search_knn.best_estimator_
-
-        # Lưu mô hình và log lại đường dẫn
-        joblib.dump(self.best_model_rf, 'best_rf_model.pkl')
-        joblib.dump(self.best_model_knn, 'best_knn_model.pkl')
-
-        # Lưu mô hình vào MLflow
-        mlflow.log_artifact('best_rf_model.pkl')
-        mlflow.log_artifact('best_knn_model.pkl')
-
-        mlflow.log_param("RandomForest_best_params", self.grid_search_rf.best_params_)
-        mlflow.log_param("KNN_best_params", self.grid_search_knn.best_params_)
-        mlflow.log_param("RandomForest_best_score", self.grid_search_rf.best_score_)
-        mlflow.log_param("KNN_best_score", self.grid_search_knn.best_score_)
-
-        print("End step 3")
-        self.next(self.evaluate)
+        print(f"✅ Best params: {self.best_params}")
+        print("✅ Cross-validated Accuracy: {:.4f}".format(self.best_score))
+        self.next(self.evaluate)  
 
     @step
     def evaluate(self):
-        print("Begin step 4")
-        # Đánh giá mô hình Random Forest và KNN
-        rf_preds = self.best_model_rf.predict(self.X_test)
-        knn_preds = self.best_model_knn.predict(self.X_test)
+        preds = self.best_model.predict(self.X_test)
+        true_labels = self.gender_submission_df['Survived']
+        accuracy = accuracy_score(true_labels, preds)
+        cm = confusion_matrix(true_labels, preds)
 
-        rf_accuracy = accuracy_score(self.gender_submission_df['Survived'], rf_preds)
-        knn_accuracy = accuracy_score(self.gender_submission_df['Survived'], knn_preds)
+        mlflow.log_metric("test_accuracy", accuracy)
 
-        print(f"🎯 Accuracy trên tập test với RandomForest: {rf_accuracy:.4f}")
-        print(f"🎯 Accuracy trên tập test với KNN: {knn_accuracy:.4f}")
+        plt.figure(figsize=(6, 4))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        plt.title("Confusion Matrix")
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.tight_layout()
+        plt.savefig("confusion_matrix.png")
+        mlflow.log_artifact("confusion_matrix.png")
 
-        # Log accuracy vào MLflow
-        mlflow.log_metric("RandomForest_Accuracy", rf_accuracy)
-        mlflow.log_metric("KNN_Accuracy", knn_accuracy)
-
-        print("End step 4")
+        print(f"📊 Test Accuracy: {accuracy:.4f}")
         self.next(self.end)
+
+    @step
+    def end(self):
+        print("🎉 Pipeline hoàn tất.")
+
+if __name__ == '__main__':
+    SklearnRandomForestFlow()
 
     @step
     def end(self):
