@@ -10,15 +10,16 @@ import pandas as pd
 
 class SklearnPipelineFlow(FlowSpec):
     # Thêm các tham số để nhận đường dẫn của ba file
-    train_data_path = Parameter('train_data_path', 
-                            help="Path to train.csv", 
-                            default="/home/workspace/workspaces/tutorials/MLops/MLops_task1/train.csv")
+    train_data_path = Parameter(
+        'train_data_path', 
+        help="Path to train.csv", 
+        default='../dataset/train.csv')
     test_data_path = Parameter('test_data_path', 
-                            help="Path to test.csv", 
-                            default="/home/workspace/workspaces/tutorials/MLops/MLops_task1/test.csv")
+                               help="Path to test.csv", 
+                               default='../dataset/test.csv')
     gender_submission_path = Parameter('gender_submission_path', 
-                            help="Path to gender_submission.csv", 
-                            default="/home/workspace/workspaces/tutorials/MLops/MLops_task1/gender_submission.csv")
+                                       help="Path to gender_submission.csv", 
+                                       default='../dataset/gender_submission.csv')
 
     @step
     def start(self):
