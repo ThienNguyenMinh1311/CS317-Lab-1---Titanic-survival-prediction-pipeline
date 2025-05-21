@@ -1,0 +1,1 @@
+{"flow_id": "SklearnPipelineFlow", "run_number": "1747754952919068", "step_name": "train_model", "task_id": "5", "field_name": "metaflow_version", "type": "metaflow_version", "value": "2.15.7", "tags": ["attempt_id:0"], "user_name": "vinh_mt", "ts_epoch": 1747755117176}

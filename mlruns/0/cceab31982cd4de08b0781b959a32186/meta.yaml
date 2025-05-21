@@ -1,0 +1,15 @@
+artifact_uri: file:///mnt/d/Acadamic/n%C4%83m%203/MLops/CS317-Lab-1---Titanic-survival-prediction-pipeline/mlruns/0/cceab31982cd4de08b0781b959a32186/artifacts
+end_time: 1747755198243
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cceab31982cd4de08b0781b959a32186
+run_name: receptive-ray-949
+run_uuid: cceab31982cd4de08b0781b959a32186
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1747755196451
+status: 3
+tags: []
+user_id: vinh_mt

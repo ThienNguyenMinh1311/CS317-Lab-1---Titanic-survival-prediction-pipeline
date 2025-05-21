@@ -1,0 +1,15 @@
+artifact_uri: file:///mnt/d/Acadamic/n%C4%83m%203/MLops/CS317-Lab-1---Titanic-survival-prediction-pipeline/mlruns/0/1a5c2e7a8eb6457caf42fbe71ac2033d/artifacts
+end_time: 1747759903993
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1a5c2e7a8eb6457caf42fbe71ac2033d
+run_name: painted-moth-848
+run_uuid: 1a5c2e7a8eb6457caf42fbe71ac2033d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1747759900441
+status: 3
+tags: []
+user_id: vinh_mt

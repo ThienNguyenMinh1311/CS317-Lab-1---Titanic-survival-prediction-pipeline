@@ -1,0 +1,15 @@
+artifact_uri: file:///mnt/d/Acadamic/n%C4%83m%203/MLops/CS317-Lab-1---Titanic-survival-prediction-pipeline/mlruns/0/a0c06fcce56d46ec9a74ded6eff48b18/artifacts
+end_time: 1747745513887
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a0c06fcce56d46ec9a74ded6eff48b18
+run_name: orderly-frog-204
+run_uuid: a0c06fcce56d46ec9a74ded6eff48b18
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1747745511269
+status: 3
+tags: []
+user_id: vinh_mt

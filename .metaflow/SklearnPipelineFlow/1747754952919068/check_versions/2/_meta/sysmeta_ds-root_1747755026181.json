@@ -1,0 +1,1 @@
+{"flow_id": "SklearnPipelineFlow", "run_number": "1747754952919068", "step_name": "check_versions", "task_id": "2", "field_name": "ds-root", "type": "ds-root", "value": "/mnt/d/Acadamic/n\u0103m 3/MLops/CS317-Lab-1---Titanic-survival-prediction-pipeline/.metaflow", "tags": ["attempt_id:0"], "user_name": "vinh_mt", "ts_epoch": 1747755026181}
