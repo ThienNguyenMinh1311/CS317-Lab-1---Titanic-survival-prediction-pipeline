@@ -46,7 +46,18 @@ docker-compose up --build
 
 ---
 
-## 3. Test API (Swagger UI)
+## 3. Chạy container từ image đã build
+
+Nếu bạn đã build image (ví dụ: `group12/titanic-api:latest`), có thể chạy container trực tiếp bằng lệnh:
+
+```bash
+docker run -d -p 8000:8000 group12/titanic-api:latest
+```
+- Truy cập API docs tại: http://localhost:8000/docs
+
+---
+
+## 4. Test API (Swagger UI hoặc curl/Postman)
 
 - **Swagger UI:** Truy cập http://localhost:8000/docs, nhập các trường và nhấn "Execute".
 
@@ -75,9 +86,16 @@ docker-compose up --build
     }
     ```
 
+- **Hoặc dùng curl:**
+    ```bash
+    curl -X POST "http://localhost:8000/predict" ^
+         -H "Content-Type: application/json" ^
+         -d "{\"Pclass\":3,\"Sex\":\"male\",\"Age\":22,\"SibSp\":1,\"Parch\":0,\"Fare\":7.25,\"Embarked\":\"S\"}"
+    ```
+
 ---
 
-## 4. (Optional) Push Docker Image lên Docker Hub
+## 5. (Optional) Push Docker Image lên Docker Hub
 
 ```bash
 docker login
@@ -87,15 +105,14 @@ docker push <your_dockerhub_username>/titanic-api:latest
 
 ---
 
-## 5. (Optional) Deploy trên server khác
+## 6. (Optional) Deploy trên server khác
 
- 
-- **Cách làm: ** Nếu đã push image lên Docker Hub, chỉ cần tạo file `docker-compose.yml` như sau:
+- Nếu đã push image lên Docker Hub, chỉ cần tạo file `docker-compose.yml` như sau:
   ```yaml
   version: "3.8"
   services:
     titanic-api:
-      image: <Group12/titanic-api:latest
+      image: <your_dockerhub_username>/titanic-api:latest
       ports:
         - "8000:8000"
       restart: always
@@ -106,6 +123,11 @@ docker push <your_dockerhub_username>/titanic-api:latest
   ```
 
 ---
+
+## Demo Video
+
+- Quá trình chạy container từ image đã build, call API và trả kết quả:
+  [Xem video demo tại đây](https://drive.google.com/file/d/1-q8LkkpOH_XNrUBfWblkxDUVUck4juaE/view?usp=sharing)
 
 **Lưu ý:**  
 - Nếu muốn dùng model khác (`best_knn_model.pkl`), sửa lại tên file và code tương ứng.
